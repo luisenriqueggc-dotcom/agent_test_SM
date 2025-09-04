@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // --- CORS
+  // CORS
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // --- parseo robusto del body
+  // Parseo robusto del body (funciona con runtimes que NO parsean JSON)
   let raw = '';
   try {
     if (req.body && typeof req.body === 'object') {
@@ -75,21 +75,19 @@ Entrega:
       body: JSON.stringify({
         model: 'gpt-4.1-mini',
         input: fullInput,
-        // 👇 Nuevo formato: text.format con json_schema
+        // ✅ Formato correcto: text.format con name en el mismo nivel
         text: {
           format: {
             type: 'json_schema',
-            json_schema: {
-              name: 'trends_report',
-              strict: true,
-              schema: {
-                type: 'object',
-                additionalProperties: false,
-                required: ['top5', 'forecast'],
-                properties: {
-                  top5: { type: 'array', minItems: 5, maxItems: 5, items: { type: 'string' } },
-                  forecast: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } }
-                }
+            name: 'trends_report',
+            strict: true,
+            schema: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['top5', 'forecast'],
+              properties: {
+                top5: { type: 'array', minItems: 5, maxItems: 5, items: { type: 'string' } },
+                forecast: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } }
               }
             }
           }
@@ -104,9 +102,13 @@ Entrega:
     }
 
     const data = await r.json();
+
+    // Preferimos el campo de conveniencia si existe
     const jsonText =
+      data?.output_text ??
       data?.output?.[0]?.content?.[0]?.text ??
-      data?.content?.[0]?.text ?? '{}';
+      data?.content?.[0]?.text ??
+      '{}';
 
     let out = { top5: [], forecast: [] };
     try { out = JSON.parse(jsonText); }
