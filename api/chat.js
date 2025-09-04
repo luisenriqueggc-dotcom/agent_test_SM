@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // CORS
+  // --- CORS
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,17 +12,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // --- parseo robusto del body (req.body puede venir undefined)
-  let bodyTxt = '';
+  // --- parseo robusto del body
+  let raw = '';
   try {
     if (req.body && typeof req.body === 'object') {
-      // Next.js / runtimes que ya parsean
-      bodyTxt = JSON.stringify(req.body);
+      raw = JSON.stringify(req.body);
     } else {
-      bodyTxt = await new Promise((resolve, reject) => {
-        let data = '';
-        req.on('data', chunk => (data += chunk));
-        req.on('end', () => resolve(data || '{}'));
+      raw = await new Promise((resolve, reject) => {
+        let buf = '';
+        req.on('data', c => (buf += c));
+        req.on('end', () => resolve(buf || '{}'));
         req.on('error', reject);
       });
     }
@@ -32,11 +31,8 @@ export default async function handler(req, res) {
   }
 
   let payload = {};
-  try {
-    payload = JSON.parse(bodyTxt || '{}');
-  } catch {
-    return res.status(400).json({ error: 'Invalid JSON body' });
-  }
+  try { payload = JSON.parse(raw || '{}'); }
+  catch { return res.status(400).json({ error: 'Invalid JSON body' }); }
 
   const {
     mode = 'tendencias',
@@ -68,7 +64,6 @@ Entrega:
 - Tono ejecutivo.
     `.trim();
 
-    // Construimos un ÚNICO input string (más compatible)
     const fullInput = `${systemPrompt}\n\n${userPrompt}`;
 
     const r = await fetch('https://api.openai.com/v1/responses', {
@@ -80,18 +75,21 @@ Entrega:
       body: JSON.stringify({
         model: 'gpt-4.1-mini',
         input: fullInput,
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'trends_report',
-            strict: true,
-            schema: {
-              type: 'object',
-              additionalProperties: false,
-              required: ['top5', 'forecast'],
-              properties: {
-                top5: { type: 'array', minItems: 5, maxItems: 5, items: { type: 'string' } },
-                forecast: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } }
+        // 👇 Nuevo formato: text.format con json_schema
+        text: {
+          format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'trends_report',
+              strict: true,
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['top5', 'forecast'],
+                properties: {
+                  top5: { type: 'array', minItems: 5, maxItems: 5, items: { type: 'string' } },
+                  forecast: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } }
+                }
               }
             }
           }
@@ -108,11 +106,11 @@ Entrega:
     const data = await r.json();
     const jsonText =
       data?.output?.[0]?.content?.[0]?.text ??
-      data?.content?.[0]?.text ??
-      '{}';
+      data?.content?.[0]?.text ?? '{}';
 
     let out = { top5: [], forecast: [] };
-    try { out = JSON.parse(jsonText); } catch (e) {
+    try { out = JSON.parse(jsonText); }
+    catch (e) {
       console.error('JSON parse from model failed:', e, jsonText);
     }
 
