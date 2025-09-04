@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lilly — Tendencias</title>
+  <meta name="description" content="Reporte de tendencias y pronóstico para Social Media." />
+  <meta name="color-scheme" content="light" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --lilly-red: #DF3024;
+      --lilly-red-dark: #C1281E;
+      --bg-soft: #ffffff;
+      --text: #2b2b2b;
+      --white: #ffffff;
+      --muted: rgba(35, 35, 35, 0.65);
+      --shadow: 0 8px 24px rgba(0,0,0,.08);
+      --radius: 18px;
+      --radius-lg: 22px;
+      --container: 1120px;
+    }
+    *{ box-sizing: border-box; }
+    html,body{ height: 100%; }
+    body{
+      background: var(--bg-soft);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      /* patrón punteado sutil como en la landing */
+      background-image: radial-gradient(rgba(0,0,0,.12) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .wrap{
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .topbar{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-top: 12px;
+      width: 100vw;
+      padding: 0 20px; /* padding lateral como en la landing */
+    }
+    .topbar-inner{
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+    .brand{
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 60px;
+    }
+    .brand img{ display: block; height: 44px; }
+    .brand-fallback{
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 35px; font-style: italic; color: var(--lilly-red);
+      text-shadow: 0 2px 0 rgba(0,0,0,.05); user-select: none;
+    }
+    .title{
+      font-family: 'Bebas Neue', sans-serif;
+      font-weight: bold;
+      letter-spacing: .5px;
+      font-size: clamp(16px, 2.2vw, 24px);
+      color: #111;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    /* Barra de acciones (volver + filtros) */
+    .actions{
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      justify-content: space-between; margin: 8px 0 12px;
+    }
+    .back{
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #111; color: #fff;
+      border: 0; border-radius: 999px;
+      padding: 10px 16px; font-weight: 800; cursor: pointer;
+      box-shadow: var(--shadow); text-decoration: none;
+    }
+    .back:hover{ filter: brightness(1.1); }
+    .filters{
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    }
+    .select, .input{
+      background: var(--white); border: 1.5px solid rgba(0,0,0,.08);
+      border-radius: 12px; padding: 10px 12px; min-height: 40px;
+      box-shadow: var(--shadow); color: var(--text);
+    }
+    .run{
+      background: #111; color: #fff;
+      border: 0; border-radius: 14px; padding: 12px 18px; font-weight: 800;
+      cursor: pointer; box-shadow: var(--shadow);
+    }
+    .run:hover{ filter: brightness(1.1); }
+
+    /* Layout de resultados */
+    .grid{
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    .card{
+      background: var(--white); border-radius: 12px;
+      box-shadow: 0 12px 24px rgba(0,0,0,.15);
+      padding: 18px;
+    }
+    .card h2{
+      margin: 0 0 10px; font-size: 22px; color: #111;
+      font-family: 'Bebas Neue', sans-serif; letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+    .muted{ color: var(--muted); font-size: 13px; }
+
+    ul{ margin: 10px 0 0 18px; }
+    li{ margin: 6px 0; }
+
+    .loading{
+      display: none; align-items: center; gap: 10px; color: var(--muted);
+      font-weight: 600;
+    }
+    .dot{ width: 8px; height: 8px; border-radius: 50%;
+      background: var(--lilly-red); animation: pulse 1s infinite ease-in-out;
+    }
+    .dot:nth-child(2){ animation-delay: .2s; }
+    .dot:nth-child(3){ animation-delay: .4s; }
+    @keyframes pulse{ 0%,100%{ transform: scale(.7); opacity:.6 } 50%{ transform: scale(1); opacity:1 } }
+
+    footer{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: var(--bg-soft);
+      text-align: center;
+      padding: 10px 0;
+      font-size: 12px;
+      color: rgba(122,20,15,.7);
+      user-select: none;
+      box-shadow: 0 -2px 6px rgba(0,0,0,.06);
+    }
+    footer p{
+      font-family:'Helvetica Neue',Arial,sans-serif; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+      font-size:12px; color:#111; opacity:.7; text-align:center;
+    }
+
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" aria-label="Barra superior">
+    <div class="topbar-inner">
+      <div class="brand" aria-label="Lilly">
+        <img src="assets/lilly-logo.svg" alt="Lilly"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
+        <span class="brand-fallback" style="display:none">Lilly</span>
+      </div>
+      <h1 class="title">SOCIAL MEDIA TOOLS BY HOOD.</h1>
+    </div>
+  </header>
+  <main class="wrap" role="main">
+
+    <div class="actions">
+      <a class="back" href="intex.html" aria-label="Volver al inicio">⟵ Volver</a>
+
+      <div class="filters" role="group" aria-label="Filtros de consulta">
+        <select id="platform" class="select" aria-label="Plataforma">
+          <option value="all">Todas las plataformas</option>
+          <option>Instagram</option>
+          <option>Facebook</option>
+          <option>TikTok</option>
+          <option>LinkedIn</option>
+          <option>X (Twitter)</option>
+        </select>
+
+        <select id="region" class="select" aria-label="Región">
+          <option value="MX">México</option>
+          <option value="LATAM">LATAM</option>
+          <option value="Global">Global</option>
+        </select>
+
+        <input id="days" class="input" type="number" min="7" max="90" value="30" aria-label="Días de historial"
+               title="Días a revisar (últimos X días)">
+        <button id="run" class="run">Generar reporte</button>
+      </div>
+    </div>
+
+    <div id="loading" class="loading" aria-live="polite">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      Procesando tendencias…
+    </div>
+
+    <section class="grid" aria-label="Resultados">
+      <article class="card" id="lastMonth">
+        <h2>Reporte de tendencias (últimos <span id="daysLabel">30</span> días)</h2>
+        <p class="muted" id="contextLabel">Plataforma: Todas • Región: México</p>
+        <ul id="listTrends">
+          <li>—</li>
+          <li>—</li>
+          <li>—</li>
+          <li>—</li>
+          <li>—</li>
+        </ul>
+      </article>
+
+      <article class="card" id="forecast">
+        <h2>Pronóstico (próximo mes)</h2>
+        <p class="muted">Temas y formatos con probabilidad de crecimiento</p>
+        <ul id="listForecast">
+          <li>—</li>
+          <li>—</li>
+          <li>—</li>
+        </ul>
+      </article>
+    </section>
+
+    <footer>
+    <p style="font-family:'Helvetica Neue',Arial,sans-serif; font-weight:700; letter-spacing:.5px; text-transform:uppercase; font-size:12px; color:#111; opacity:.7; text-align:center; margin-top:40px;">
+      © 2025 Social Media Tools by Hood. All Rights Reserved.
+    </p>
+  </footer>
+  
+  </main>
+
+  <script>
+    // Actualiza etiquetas de contexto
+    const $platform = document.getElementById('platform');
+    const $region   = document.getElementById('region');
+    const $days     = document.getElementById('days');
+    const $run      = document.getElementById('run');
+    const $loading  = document.getElementById('loading');
+
+    const $daysLabel    = document.getElementById('daysLabel');
+    const $contextLabel = document.getElementById('contextLabel');
+    const $listTrends   = document.getElementById('listTrends');
+    const $listForecast = document.getElementById('listForecast');
+
+    function updateContextLabel(){
+      $daysLabel.textContent = String($days.value || 30);
+      $contextLabel.textContent = `Plataforma: ${$platform.value} • Región: ${$region.value}`;
+    }
+    $platform.addEventListener('change', updateContextLabel);
+    $region.addEventListener('change', updateContextLabel);
+    $days.addEventListener('input', updateContextLabel);
+
+    // Render simple
+    function renderList(el, items){
+      el.innerHTML = '';
+      items.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        el.appendChild(li);
+      });
+    }
+
+    // Simulación local sin servidor:
+    async function simulateTrendsQuery({ platform, region, days }){
+      // Pequeño retraso para mostrar loading
+      await new Promise(r => setTimeout(r, 1000));
+      // Datos de ejemplo (placeholder)
+      const top5 = [
+        `Crecimiento de Reels/Shorts en ${platform} (+engagement por tutoriales rápidos)`,
+        `Contenido UGC/médicos-creadores gana confianza en ${region}`,
+        `Carruseles educacionales: guarda/compartir ↑ (últimos ${days} días)`,
+        `Lives con Q&A clínico: sesiones de 15–20 min funcionan mejor`,
+        `Hashtags específicos de patología/diagnóstico superan genéricos`
+      ];
+      const forecast = [
+        `Auge de formatos “antes/después” con datos (siempre con referencias)`,
+        `Tendencia a micro-historias de pacientes (cumpliendo compliance)`,
+        `Mayor peso de subtítulos/overlays con keywords médicas`
+      ];
+      return { top5, forecast };
+    }
+
+    $run.addEventListener('click', async () => {
+      updateContextLabel();
+      $loading.style.display = 'inline-flex';
+      $run.disabled = true;
+
+      try {
+        // ===== OPCIÓN REAL (cuando tengas el backend en Vercel) =====
+        // const res = await fetch('/api/tendencias', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     mode: 'tendencias',
+        //     platform: $platform.value,
+        //     region: $region.value,
+        //     days: Number($days.value || 30)
+        //   })
+        // });
+        // const data = await res.json();
+        // renderList($listTrends, data.top5);
+        // renderList($listForecast, data.forecast);
+
+        // ===== MODO DEMO LOCAL (sin servidor) =====
+        const data = await simulateTrendsQuery({
+          platform: $platform.value,
+          region: $region.value,
+          days: Number($days.value || 30)
+        });
+        renderList($listTrends, data.top5);
+        renderList($listForecast, data.forecast);
+
+      } catch (e) {
+        alert('Error al generar el reporte. Intenta de nuevo.');
+        console.error(e);
+      } finally {
+        $loading.style.display = 'none';
+        $run.disabled = false;
+      }
+    });
+
+    // Estado inicial
+    updateContextLabel();
+  </script>
+</body>
+</html>
